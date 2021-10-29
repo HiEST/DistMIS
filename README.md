@@ -106,6 +106,7 @@ The framework is composed by 4 main scripts: *tfrecord*, *visualize* (basic prep
 The *tfrecord* script reads the *dataset.json* file located inside the dataset folder, and creates a tf.data.Dataset from the imagesTr and labelsTr samples. It requires the orignal dataset directory path as argument, e.g. /home/Task01_BrainTumor/. If the target directory is provided, the tf.data.Dataset is serialized and saved in TFRecord format into that directory. Running this script is **the first step** in order to run the other scripts. Serializing the dataset the memory footprint will be larger but it has good benefits:
 * Perform offline preprocessing and data augmentation.
 * Optimize data reading, online preprocessing and data augmentation.
+
 It can seem the benefits are poor, but in Deep Learning applications with this type of data, these optimization techniques save hours of training.
 
 ##### Usage:
