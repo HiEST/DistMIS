@@ -1,0 +1,10 @@
+{
+  "lr": 1e-04,
+  "epochs": 10,
+  "verbose": 2,
+  "nodes": 2,
+  "gpus": 4,
+  "batch_size": 2,
+  "num_workers": 8,
+  "use_gpu": true
+}

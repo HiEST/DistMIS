@@ -1,0 +1,1 @@
+{"lr": 0.00010244877160822698, "epochs": 10, "verbose": 2, "nodes": 1, "gpus": 1, "batch_size": 2, "num_workers": 1, "use_gpu": true}

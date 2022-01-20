@@ -358,3 +358,94 @@ With the first part of the script we have requested the resources via slurm and 
 export PYTHONUNBUFFERED=1
 python data_parallelism.py --config ./config.json
 ```
+# Pytorch
+
+## Parallelism Modes
+
+Additionally to the Tensorflow based open implementation of the Data and Experiment Parallelism design for Supercomputing environments, focused on Deep Learning for Image Segmentation, we have also provided an extension using Pytorch. In this addendum we provide the scripts and configurations needed to replicate the experimentation that has been done, comparing via N experiments the scalability of data and experiment parallelism with Pytorch.
+
+### Data Parallelism
+
+Similarly to the Tensorflow proposal, we have provided a *data parallel* script that replicates the model on each GPU and divides the data in chunks, each sent to one device. To do so, we have used Ray.SGD and the corresponding TorchTrainer object. The **TorchTrainer** object is a wrapper around torch.distributed.launch that automatically replicates the training components across different machines so that training can be executed in parallel. One of the main benefits of Ray.SGD is that we can scale up the number of workers seamlessly across multiple nodes without making any change to the code.
+
+##### Usage:
+First, a configuration JSON file must be defined to execute the script. This configuration file requires the following parameters:
+
+- lr
+  > (int) Hyperparameter that defines the step size at each iteration while moving toward a minimum of a loss function.
+- epochs
+  > (int) Number of epochs each model will train for.
+- verbose
+  >(int) Number of epochs each model will train for.
+- nodes
+  >  (int) Number of nodes.
+- gpus
+  > (int) Number of GPUs per node.
+- batch_size
+  > (int) Batch size handled by each replica, i.e. GPU.
+- num_workers
+  > (int) Number of nodes * number of GPUs per node.
+- use_gpu
+  > (bool) Boolean that indicates if the train is going to be done using GPU resources.
+
+Once the configuration file is ready, we can replicate the experimentation with one node as follows. First, we initialize the ray cluster, specifying the number of gpus and cpus per gpu.
+
+```console
+foo@bar:~$ ray start --head --num-cpus=20 --num-gpus=2
+```
+Under the hood, TorchTrainer will create replicas of your model, each of which is managed by a Ray actor connected to the Ray cluster. Thus, we can now execute the training script, defining with flag g the number of gpus.
+
+```console
+foo@bar:~$ python multiexperiment.py -g 2
+```
+
+If we are using **multi node**, we first need to initialize ray with a more complex bash script. Please refer to the section [Multi-node Ray Cluster](#multi-node-ray-cluster).
+
+### Experiment Parallelism
+
+Similarly to the Experiment Parallelism approach presented in Tensorflow, we used the ray.tune library for experiment execution and hyperparameter tuning at any scale. Given an object *trainable* and the number of *samples* (experiments) that we want to make, the function **tune.run** executes the hyperparameter tuning. This function manages the experiment and provides many features such as logging, checkpointing, and early stopping. As happens in Data Parallelism, in a multinode environment we have to deal with more complex ray initializations, so the bash script gets harder to deal with ([Multi-node Ray Cluster](#multi-node-ray-cluster)). 
+
+##### Usage:
+First, a configuration JSON file must be defined to execute the script. This configuration file requires the following parameters:
+
+- lr
+  > (int) Hyperparameter that defines the step size at each iteration while moving toward a minimum of a loss function.
+
+- epochs
+  > (int) Number of epochs each model will train for.
+- verbose
+  >(int) Verbose.
+- nodes
+  >  (int) Number of nodes.
+- gpus
+  > (int) Number of GPUs per node.
+- batch_size
+  > (int) Batch size handled by each replica, i.e. GPU.
+- num_workers
+  > (int) Number of nodes * number of GPUs per node.
+- use_gpu
+  > (bool) Boolean that indicates if the train is going to be done using GPU resources.
+- multinode
+  > (bool) Boolean that indicates if the train is going to be done in a multinode environment.
+- cpu_per_trial
+  > (int) Number of CPUs assigned to each trial.
+- gpu_per_trial
+  > (int)  Number of GPUs assigned to each trial.
+- num_samples
+  > (int) Number of experiments.
+
+In order to execute the experiment parallelism script we first need to start a ray.cluster with the required resources. If we are using a **single node** then we can type the following command with the given cpus and gpus.
+
+```console
+foo@bar:~$ ray start --head --num-cpus=20 --num-gpus=2
+```
+Once the ray cluster is started, we can call our script with our configuration json file.
+
+```console
+foo@bar:~$ python train.py -c ../config/2gpu/config.json
+```
+It is a good practice to shutdown the ray cluster when the work is done.
+
+```console
+foo@bar:~$ ray stop
+```

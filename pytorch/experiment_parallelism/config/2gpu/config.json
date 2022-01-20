@@ -1,0 +1,14 @@
+{
+  "lr": 1e-04,
+  "epochs": 10,
+  "verbose": 2,
+  "nodes": 1,
+  "gpus": 2,
+  "batch_size": 2,
+  "num_workers": 2,
+  "use_gpu": true,
+  "multinode": false,
+  "cpu_per_trial": 10,
+  "gpu_per_trial": 1,
+  "num_samples": 24
+}
